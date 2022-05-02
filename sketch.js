@@ -239,7 +239,7 @@ function togglePause(){
       pause = false;
     }else{
     pause = true;}
-    //print(pause)
+  
 }
 
 function resetData(){
@@ -247,7 +247,7 @@ function resetData(){
     y=[];
     y2 = [];
     drawDia();
-    //print('reset');
+
 
 }
 
