@@ -4,9 +4,8 @@
 //https://makeabilitylab.github.io/physcomp/
 
 //Todo:
-//- improve csv output
-//- add second graph/axis
-// -improve gaps between serial data and unit
+// - add Objects for Each data including data and Buttons
+//
 let pHtmlMsg;
 let serialOptions = { baudRate: 115200  };
 let serial;
@@ -19,11 +18,11 @@ let dataTable;
 let receivedData = false;
 let data = []; //list of incoming data
 let pause = false;
-
+let axisButtons = [];
 let paramX, paramY, paramY2;
 
 function setup() {
-  createCanvas(800,150);
+  createCanvas(1200,150);
 
   // Setup Web Serial using serial.js
   serial = new Serial();
@@ -120,6 +119,7 @@ function createButtons(){
     bx.mousePressed(function(){selectData('x',i)});
     by.mousePressed(function(){selectData('y',i)});
     by2.mousePressed(function(){selectData('y2',i)});
+    axisButtons.push(bx,by);
   }
 }
 
@@ -128,7 +128,7 @@ function drawSerialData(){
   textAlign(LEFT);
   for(let i = 0; i < data.length-1; i = i + 2){
     text(data[i] + ':',20+100*i,30);
-    text(data[i+1],70+110*i,30);
+    text(data[i+1],20+100*i+data[i].length*15,30);
   }
 }
 
@@ -175,6 +175,7 @@ function onSerialConnectionOpened(eventSender) {
 function onSerialConnectionClosed(eventSender) {
   console.log("onSerialConnectionClosed");
   receivedData = false;
+  pHtmlMsg.html("Serial connection closed");
 }
 
 
@@ -183,7 +184,8 @@ function onSerialDataReceived(eventSender, newData) {
   //called first time data are received and creates buttons for each data.
 
   if(!receivedData){
-    createButtons();
+    setTimeout(createButtons, 1000);
+    //createButtons();
     // parameters for the axis, default 0 - time, and 2 first data
     paramX = 0;
     paramY = 2;
@@ -197,7 +199,11 @@ function onSerialDataReceived(eventSender, newData) {
   labelY=data[paramY];
   y.push(data[paramY+1]);
   labelY2=data[paramY2];
-  y2.push(data[paramY2+1]);
+  if(paramY2 != undefined){
+    y2.push(data[paramY2+1]);
+  }else{
+    y2.push(0);
+  }
   }
 }
 
@@ -233,7 +239,7 @@ function togglePause(){
       pause = false;
     }else{
     pause = true;}
-    print(pause)
+    //print(pause)
 }
 
 function resetData(){
@@ -241,24 +247,31 @@ function resetData(){
     y=[];
     y2 = [];
     drawDia();
-    print('reset');
+    //print('reset');
 
 }
 
-function addData(xD,yD){
-  let newRow = dataTable.addRow();
-  newRow.setString(labelX, xD);
-  newRow.setString(labelY, yD);
-}
+
 function saveCsv(){
+
   dataTable.clearRows()
   dataTable.removeColumn(labelX)
   dataTable.removeColumn(labelY)
+  dataTable.removeColumn(labelY2)
 
   dataTable.addColumn(labelX);
   dataTable.addColumn(labelY);
+  if(labelY2 != undefined){
+    dataTable.addColumn(labelY2);
+  }
+
   for(let i=0;i<x.length;i++){
-    addData(x[i],y[i]);
+    let newRow = dataTable.addRow();
+    newRow.setString(labelX, x[i]);
+    newRow.setString(labelY, y[i]);
+    if(labelY2 != undefined){
+      newRow.setString(labelY2, y2[i]);
+    }
   }
   saveTable(dataTable, 'data.csv');
 
