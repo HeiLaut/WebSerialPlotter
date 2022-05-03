@@ -4,22 +4,23 @@
 //https://makeabilitylab.github.io/physcomp/
 
 //Todo:
-// - add Objects for Each data including data and Buttons
+// - add Objects for Each data including data and Buttons (complicated!)
 //
 let pHtmlMsg;
 let serialOptions = { baudRate: 115200  };
 let serial;
-let x = []; //data for x-Axis
-let y = []; //data for y-Axis
-let y2 = []; //second y-Axis data
 
-let labelX, labelY, labelY2;
+let paramX = 0;
+let paramY = 1;
+let paramY2;
 let dataTable;
 let receivedData = false;
 let data = []; //list of incoming data
 let pause = false;
-let axisButtons = [];
-let paramX, paramY, paramY2;
+
+
+
+let values =[]; //Array for Data Objects
 
 function setup() {
   createCanvas(1200,150);
@@ -71,6 +72,8 @@ function setup() {
 
 }
 
+
+
 function draw() {
 
   if(serial.isOpen()){
@@ -80,12 +83,12 @@ function draw() {
   };
 
   background(220);
-  let len = dataSlider.value();
-  if(x.length>len){
-  x = x.slice(x.length-len);
-  y = y.slice(y.length-len);
-  y2 = y2.slice(y2.length-len);
-}
+  //let len = dataSlider.value();
+  //if(x.length>len){
+  //x = x.slice(x.length-len);
+  //y = y.slice(y.length-len);
+  //y2 = y2.slice(y2.length-len);
+//}
   if(!pause){
    drawDia();
    pauseButton.style("background-color","#008CBA");
@@ -103,13 +106,14 @@ function draw() {
 }
 
 function createButtons(){
-  for(let i = 0; i < data.length-1; i  = i + 2){
+  for(let i = 0; i < values.length; i++){
+    let el = values[i];
     let bx = createButton('x');
     let by = createButton('y');
     let by2 = createButton('y2');
-    bx.position(20+i*100, 580);
-    by.position(50+i*100, 580);
-    by2.position(80+i*100, 580);
+    bx.position(el.posX, 580);
+    by.position(20+el.posX, 580);
+    by2.position(40+el.posX, 580);
     bx.style("font-size","14px");
     bx.style("padding","5px 5px");
     by.style("font-size","14px");
@@ -119,16 +123,24 @@ function createButtons(){
     bx.mousePressed(function(){selectData('x',i)});
     by.mousePressed(function(){selectData('y',i)});
     by2.mousePressed(function(){selectData('y2',i)});
-    axisButtons.push(bx,by);
+    el.buttonX = bx;
+    el.buttonY = by;
+    el.buttonY2 = by2;
+
+
   }
+  values[0].buttonX.style("background-color","red");
+
+  values[1].buttonY.style("background-color","red");
 }
 
 function drawSerialData(){
   textSize(20);
   textAlign(LEFT);
-  for(let i = 0; i < data.length-1; i = i + 2){
-    text(data[i] + ':',20+100*i,30);
-    text(data[i+1],20+100*i+data[i].length*15,30);
+  for(let i = 0; i < values.length; i++){
+    let el = values[i]
+    text(el.name+':',el.posX,el.posY)
+    text(el.lastElement(),el.posX+el.name.length*12,el.posY)
   }
 }
 
@@ -137,18 +149,34 @@ function selectData(ax,dat){
   /** gets the axis and the postition of the data in the data-Array. 0, 2, 4 ...
   */
   if(ax == 'x'){
+
     if(paramX != dat){
       paramX = dat;
+      for(let i=0; i<values.length;i++){
+        values[i].buttonX.style("background-color","#008CBA");
+      }
+      values[dat].buttonX.style("background-color","red");
     }
    }else if (ax =='y') {
+
      if(paramY != dat){
        paramY = dat;
+       for(let i=0; i<values.length;i++){
+         values[i].buttonY.style("background-color","#008CBA");
+       }
+       values[dat].buttonY.style("background-color","red");
+
      }else{
       // paramY = undefined;
      }
   }else{
+    for(let i=0; i<values.length;i++){
+      values[i].buttonY2.style("background-color","#008CBA");
+    }
     if(paramY2 != dat){
       paramY2 = dat;
+      values[dat].buttonY2.style("background-color","red");
+
     }else{
       paramY2 = undefined;
     }
@@ -178,6 +206,21 @@ function onSerialConnectionClosed(eventSender) {
   pHtmlMsg.html("Serial connection closed");
 }
 
+function createDataObjects(){
+  for(let i = 0; i < data.length; i = i+2){
+    a =new Value(data[i],20+100*i,30);
+    values.push(a);}
+}
+
+function storeData(){
+  try{
+    for(let i=0;i < values.length;i++){
+      values[i].data.push(data[2*i+1]);
+      values[i].del(dataSlider.value());
+    }
+
+  }catch{}
+}
 
 function onSerialDataReceived(eventSender, newData) {
   data = newData.split(',');
@@ -185,15 +228,16 @@ function onSerialDataReceived(eventSender, newData) {
 
   if(!receivedData){
     setTimeout(createButtons, 1000);
-    //createButtons();
-    // parameters for the axis, default 0 - time, and 2 first data
-    paramX = 0;
-    paramY = 2;
-    //paramY2 = -1;
-    receivedData=true;
+    setTimeout(createDataObjects,200);
 
+
+    receivedData=true;
   }
   if(!pause){
+  storeData()
+  }
+//  x = values[0].data;
+  /*
   labelX=data[paramX];
   x.push(data[paramX+1]);
   labelY=data[paramY];
@@ -204,7 +248,8 @@ function onSerialDataReceived(eventSender, newData) {
   }else{
     y2.push(0);
   }
-  }
+}*/
+
 }
 
 /**
@@ -239,13 +284,14 @@ function togglePause(){
       pause = false;
     }else{
     pause = true;}
-  
+
 }
 
 function resetData(){
-    x=[];
-    y=[];
-    y2 = [];
+  for(let i =0; i < values.length; i++){
+    values[i].data = [];
+  }
+
     drawDia();
 
 
