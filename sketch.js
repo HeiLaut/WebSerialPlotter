@@ -6,7 +6,7 @@
 //Todo:
 // - add Objects for Each data including data and Buttons (complicated!)
 //
-let pHtmlMsg;
+let pHtmlMsg, sliderTxt, sliderValue;
 let serialOptions = { baudRate: 115200  };
 let serial;
 
@@ -21,9 +21,14 @@ let colors =  ["#96ceb4","#ffeead","#ffcc5c","#ff6f69"];
 let values =[]; //Array for Data Objects
 let d1,d2;
 let frame = 0;
+let canvas,plot;
 
 function setup() {
-  createCanvas(1200,500);
+  canvas = createCanvas(1200,500);
+  plot = select('#plot')
+  canvas.position(0,600);
+  plot.position(0,20);
+
   // Setup Web Serial using serial.js
   serial = new Serial();
   serial.on(SerialEvents.CONNECTION_OPENED, onSerialConnectionOpened);
@@ -35,7 +40,7 @@ function setup() {
   serial.autoConnectAndOpenPreviouslyApprovedPort(serialOptions);
 
   // Add in a lil <p> element to provide messages. This is optional
-  pHtmlMsg = createP("No Serial Device Connected");
+
 
   pauseButton = createButton('Run/ Pause (p)');
   pauseButton.position(800, 50);
@@ -59,19 +64,39 @@ function setup() {
 
 
   dataSlider = createSlider(100, 5000, 1000, 100);
-  dataSlider.position(10, 650);
+  dataSlider.position(plot.x+10, plot.y + 500);
   dataSlider.style('width', '300px');
 
   closeButton = createButton('Close Serial Connection');
-  closeButton.position(0,720);
+  closeButton.position(0,plot.y+height+canvas.y);
   closeButton.style('font-size','10px');
   closeButton.style('background-color','#8B0000');
   closeButton.mousePressed(closeSerialPort);
 
-  dataTable = new p5.Table();
+  selectX = createSelect();
+  selectX.changed(selectXChanged);
+  selectX.position(20,20);
 
-  d1 = new Window(100,150,"TEXT",colors[2])
-  d2 = new Window(400,150,"TEXT",colors[1])
+  selectY = createSelect();
+  selectY.changed(selectYChanged);
+  selectY.position(150,20);
+
+  selectY2 = createSelect();
+  selectY2.changed(selectY2Changed);
+  selectY2.option("not defined")
+  selectY2.position(280,20);
+
+
+
+  pHtmlMsg = createP("No Serial Device Connected");
+  pHtmlMsg.position(0,plot.y+height+canvas.y+20);
+  sliderTxt = createP("Number of Data Points: ");
+  sliderTxt.position(plot.x+12,plot.y + 460);
+  sliderValue = createP(dataSlider.value());
+  sliderValue.position(plot.x+180,plot.y + 460)
+
+
+    dataTable = new p5.Table();
 
 }
 
@@ -87,15 +112,7 @@ function draw() {
     serialButton.position(10,10);
   };
 
-
-  try{
-    if(frame%10 == 0){
-    d1.txt = values[1].name +": "+ values[1].data.slice(-1);
-    d2.txt = values[2].name +": "+ values[2].data.slice(-1);
-  }
-  }catch{}
-
-  if(!pause){
+ if(!pause){
    drawDia();
    pauseButton.style("background-color","#008CBA");
 
@@ -107,90 +124,49 @@ function draw() {
   drawSerialData();
   textSize(16);
   textAlign(CENTER)
-  text(dataSlider.value(),350,120);
-  text("Number of Data Points",160,100);
-  d1.draw()
-  d2.draw()
+  sliderValue.html(dataSlider.value());
+
 }
 
-function createButtons(){
+
+function createSelectionParameters(){
   for(let i = 0; i < values.length; i++){
     let el = values[i];
-    let bx = createButton('x');
-    let by = createButton('y');
-    let by2 = createButton('y2');
-    bx.position(el.posX, 580);
-    by.position(20+el.posX, 580);
-    by2.position(40+el.posX, 580);
-    bx.style("font-size","14px");
-    bx.style("padding","5px 5px");
-    by.style("font-size","14px");
-    by.style("padding","5px 5px");
-    by2.style("font-size","14px");
-    by2.style("padding","5px 5px");
-    bx.mousePressed(function(){selectData('x',i)});
-    by.mousePressed(function(){selectData('y',i)});
-    by2.mousePressed(function(){selectData('y2',i)});
-    el.buttonX = bx;
-    el.buttonY = by;
-    el.buttonY2 = by2;
-
-
+    //make option for drop down selection
+    selectX.option(i + ": "+ el.name);
+    selectY.option(i + ": "+ el.name);
+    selectY2.option(i + ": "+ el.name);
   }
-  values[0].buttonX.style("background-color","red");
-
-  values[1].buttonY.style("background-color","red");
+  selectY.selected(1 + ": "+ values[1].name);
 }
+
+function selectXChanged() {
+  paramX = selectX.value()[0]
+}
+function selectYChanged() {
+  paramY = selectY.value()[0]
+}
+function selectY2Changed() {
+  if(selectY2.value() === "not defined"){
+    paramY2 = undefined;
+  }else{
+    paramY2 = selectY2.value()[0];
+  }
+}
+
 
 function drawSerialData(){
   textSize(20);
   textAlign(LEFT);
   for(let i = 0; i < values.length; i++){
     let el = values[i]
-    text(el.name+':',el.posX,el.posY)
-    text(el.lastElement(),el.posX+el.name.length*12,el.posY)
+    // text(el.name+':',el.posX,el.posY)
+    // text(el.lastElement(),el.posX+el.name.length*12,el.posY)
+    el.window.draw();
+    el.window.txt = el.name + ": "+ el.data.slice(-1);
   }
 }
 
-
-function selectData(ax,dat){
-  /** gets the axis and the postition of the data in the data-Array. 0, 2, 4 ...
-  */
-  if(ax == 'x'){
-
-    if(paramX != dat){
-      paramX = dat;
-      for(let i=0; i<values.length;i++){
-        values[i].buttonX.style("background-color","#008CBA");
-      }
-      values[dat].buttonX.style("background-color","red");
-    }
-   }else if (ax =='y') {
-
-     if(paramY != dat){
-       paramY = dat;
-       for(let i=0; i<values.length;i++){
-         values[i].buttonY.style("background-color","#008CBA");
-       }
-       values[dat].buttonY.style("background-color","red");
-
-     }else{
-      // paramY = undefined;
-     }
-  }else{
-    for(let i=0; i<values.length;i++){
-      values[i].buttonY2.style("background-color","#008CBA");
-    }
-    if(paramY2 != dat){
-      paramY2 = dat;
-      values[dat].buttonY2.style("background-color","red");
-
-    }else{
-      paramY2 = undefined;
-    }
-
-  }
-}
 /**
 00px; * Callback function by serial.js when there is an error on web serial
  *
@@ -235,13 +211,12 @@ function onSerialDataReceived(eventSender, newData) {
   //called first time data are received and creates buttons for each data.
   if(!receivedData){
     setTimeout(createDataObjects,1000);
-    setTimeout(createButtons, 1000);
+    setTimeout(createSelectionParameters, 1000);
     receivedData=true;
   }
   if(!pause){
   storeData()
   }
-
 }
 
 /**
@@ -265,6 +240,20 @@ function keyPressed(){
   }
   if(key == 'r'){
     resetData();
+  }
+  if(key == 't'){
+    if(canvas.y != 0){
+    canvas.position(0,0);
+    plot.position(0,500);
+  }else{
+    canvas.position(0,500);
+    plot.position(0,0);
+  }
+    dataSlider.position(plot.x+10, plot.y + 500);
+    sliderTxt.position(plot.x+12,plot.y + 460);
+    sliderValue.position(plot.x+180,plot.y + 460);
+
+
   }
 }
 

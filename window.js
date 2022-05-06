@@ -6,7 +6,7 @@ class Window{
     this.px = x,
     this.py = y,
     this.dat = dat,
-    this.width = textWidth(dat)+10,
+    this.width = textWidth(dat)+100,
     this.txtSz = 20;
     this.height = this.txtSz+30,
     this.bgcolor = col,
@@ -60,6 +60,9 @@ class Window{
     move(){
       this.x = mouseX-(this.mx-this.px);
       this.y = mouseY-(this.my-this.py);
+      let grid = 20;
+      this.x = round(this.x/grid)*grid
+      this.y = round(this.y/grid)*grid
       if(this.x<0){
         this.x = 0;
       }
