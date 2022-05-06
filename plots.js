@@ -16,7 +16,7 @@ function drawDia(){
     x: x,
     y: y,
     name: labelY,
-    type: 'scatter'
+    type: 'line'
   }
 
   var trace2 = {
@@ -24,7 +24,7 @@ function drawDia(){
     y: y2,
     name:labelY2,
     yaxis: 'y2',
-    type: 'scatter'
+    type: 'line'
   }
 
 

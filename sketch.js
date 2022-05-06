@@ -17,14 +17,13 @@ let dataTable;
 let receivedData = false;
 let data = []; //list of incoming data
 let pause = false;
-
-
-
+let colors =  ["#96ceb4","#ffeead","#ffcc5c","#ff6f69"];
 let values =[]; //Array for Data Objects
+let d1,d2;
+let frame = 0;
 
 function setup() {
-  createCanvas(1200,150);
-
+  createCanvas(1200,500);
   // Setup Web Serial using serial.js
   serial = new Serial();
   serial.on(SerialEvents.CONNECTION_OPENED, onSerialConnectionOpened);
@@ -39,25 +38,26 @@ function setup() {
   pHtmlMsg = createP("No Serial Device Connected");
 
   pauseButton = createButton('Run/ Pause (p)');
-  pauseButton.position(800, 10);
+  pauseButton.position(800, 50);
   pauseButton.style("width","150px")
   pauseButton.mousePressed(togglePause);
 
   resetButton = createButton('Reset Data (r)');
-  resetButton.position(800, 60);
+  resetButton.position(800, 100);
   resetButton.style("width","150px")
-
   resetButton.mousePressed(resetData);
+
+  csvButton = createButton('Save CSV-File');
+  csvButton.position(800,150  );
+  csvButton.style("width","150px")
+  csvButton.mousePressed(saveCsv);
 
   serialButton = createButton('Open Serial Connection');
   serialButton.position(10,10);
   serialButton.mousePressed(openSerialPort)
 
-  csvButton = createButton('Save CSV-File');
-  csvButton.position(800,110);
-  csvButton.style("width","150px")
 
-  csvButton.mousePressed(saveCsv);
+
   dataSlider = createSlider(100, 5000, 1000, 100);
   dataSlider.position(10, 650);
   dataSlider.style('width', '300px');
@@ -70,11 +70,16 @@ function setup() {
 
   dataTable = new p5.Table();
 
+  d1 = new Window(100,150,"TEXT",colors[2])
+  d2 = new Window(400,150,"TEXT",colors[1])
+
 }
 
 
 
 function draw() {
+  background(255);
+  frame+=1;
 
   if(serial.isOpen()){
     serialButton.position(-300,0);
@@ -82,13 +87,14 @@ function draw() {
     serialButton.position(10,10);
   };
 
-  background(220);
-  //let len = dataSlider.value();
-  //if(x.length>len){
-  //x = x.slice(x.length-len);
-  //y = y.slice(y.length-len);
-  //y2 = y2.slice(y2.length-len);
-//}
+
+  try{
+    if(frame%10 == 0){
+    d1.txt = values[1].name +": "+ values[1].data.slice(-1);
+    d2.txt = values[2].name +": "+ values[2].data.slice(-1);
+  }
+  }catch{}
+
   if(!pause){
    drawDia();
    pauseButton.style("background-color","#008CBA");
@@ -103,6 +109,8 @@ function draw() {
   textAlign(CENTER)
   text(dataSlider.value(),350,120);
   text("Number of Data Points",160,100);
+  d1.draw()
+  d2.draw()
 }
 
 function createButtons(){
@@ -182,13 +190,13 @@ function selectData(ax,dat){
     }
 
   }
-  //resetData()
 }
 /**
 00px; * Callback function by serial.js when there is an error on web serial
  *
  * @param {} eventSender
  */
+
  function onSerialErrorOccurred(eventSender, error) {
   console.log("onSerialErrorOccurred", error);
   pHtmlMsg.html(error);
@@ -202,7 +210,7 @@ function onSerialConnectionOpened(eventSender) {
 
 function onSerialConnectionClosed(eventSender) {
   console.log("onSerialConnectionClosed");
-  receivedData = false;
+  //receivedData = false;
   pHtmlMsg.html("Serial connection closed");
 }
 
@@ -225,30 +233,14 @@ function storeData(){
 function onSerialDataReceived(eventSender, newData) {
   data = newData.split(',');
   //called first time data are received and creates buttons for each data.
-
   if(!receivedData){
+    setTimeout(createDataObjects,1000);
     setTimeout(createButtons, 1000);
-    setTimeout(createDataObjects,200);
-
-
     receivedData=true;
   }
   if(!pause){
   storeData()
   }
-//  x = values[0].data;
-  /*
-  labelX=data[paramX];
-  x.push(data[paramX+1]);
-  labelY=data[paramY];
-  y.push(data[paramY+1]);
-  labelY2=data[paramY2];
-  if(paramY2 != undefined){
-    y2.push(data[paramY2+1]);
-  }else{
-    y2.push(0);
-  }
-}*/
 
 }
 
@@ -258,7 +250,6 @@ function onSerialDataReceived(eventSender, newData) {
 function openSerialPort() {
   if (!serial.isOpen()) {
     serial.connectAndOpen(null, serialOptions);
-    createButtons();
   }
 
 }
@@ -291,34 +282,25 @@ function resetData(){
   for(let i =0; i < values.length; i++){
     values[i].data = [];
   }
-
     drawDia();
-
-
 }
 
 
 function saveCsv(){
-
   dataTable.clearRows()
-  dataTable.removeColumn(labelX)
-  dataTable.removeColumn(labelY)
-  dataTable.removeColumn(labelY2)
 
-  dataTable.addColumn(labelX);
-  dataTable.addColumn(labelY);
-  if(labelY2 != undefined){
-    dataTable.addColumn(labelY2);
+  for(let i = 0; i < values.length;i++){
+    dataTable.removeColumn(values[i].name);
+    dataTable.addColumn(values[i].name);
   }
-
-  for(let i=0;i<x.length;i++){
+  for(let k=0;k<values[0].data.length;k++){
     let newRow = dataTable.addRow();
-    newRow.setString(labelX, x[i]);
-    newRow.setString(labelY, y[i]);
-    if(labelY2 != undefined){
-      newRow.setString(labelY2, y2[i]);
+    for(let n = 0; n < values.length; n++){
+      newRow.setString(values[n].name, values[n].data[k]);
     }
-  }
+    }
+
+
   saveTable(dataTable, 'data.csv');
 
 }
