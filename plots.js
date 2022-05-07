@@ -1,12 +1,22 @@
 function drawDia(){
+  let labelX,labelY,labelY2,x,y,y2;
+  try{
+    x=values[paramX].data;
+    labelX=values[paramX].name;
+    y=values[paramY].data;
+    labelY=values[paramY].name;
+    y2=values[paramY2].data;
+    labelY2=values[paramY2].name;
+  }
+    catch{
+    }
+
   PLOT = document.getElementById('plot');
-  //let nameY = labelY[0];
-  //let nameY2 = labelX[0];
   var trace1 ={
     x: x,
     y: y,
     name: labelY,
-    type: 'scatter'
+    type: 'line'
   }
 
   var trace2 = {
@@ -14,7 +24,7 @@ function drawDia(){
     y: y2,
     name:labelY2,
     yaxis: 'y2',
-    type: 'scatter'
+    type: 'line'
   }
 
 
