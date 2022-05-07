@@ -17,11 +17,14 @@ let dataTable;
 let receivedData = false;
 let data = []; //list of incoming data
 let pause = false;
-let colors =  ["#96ceb4","#ffeead","#ffcc5c","#ff6f69"];
+//let colors =  ["#96ceb4","#ffeead","#ffcc5c","#ff6f69"];
+let colors = ["#3c9eff","#ff445d","#f8d248","#5bcca0","#aaaaaa"]
 let values =[]; //Array for Data Objects
-let d1,d2;
-let frame = 0;
 let canvas,plot;
+/**anymoves regocnizes if any if the object ist moving. When this is the cas the
+other objects dont move or scale. Needs an other solution than a
+global variable. At the moment i have no better approach*/
+let anymoves = false;
 
 function setup() {
   canvas = createCanvas(1200,500);
@@ -61,35 +64,45 @@ function setup() {
   serialButton.position(10,10);
   serialButton.mousePressed(openSerialPort)
 
+  closeButton = createButton('Close Serial Connection');
+  closeButton.position(800,200);
+  closeButton.style('font-size','10px');
+  closeButton.style('background-color','#8B0000');
+  closeButton.mousePressed(closeSerialPort);
+
 
 
   dataSlider = createSlider(100, 5000, 1000, 100);
   dataSlider.position(plot.x+10, plot.y + 500);
   dataSlider.style('width', '300px');
 
-  closeButton = createButton('Close Serial Connection');
-  closeButton.position(0,plot.y+height+canvas.y);
-  closeButton.style('font-size','10px');
-  closeButton.style('background-color','#8B0000');
-  closeButton.mousePressed(closeSerialPort);
 
   selectX = createSelect();
   selectX.changed(selectXChanged);
-  selectX.position(20,20);
+  selectX.position(40,plot.y + 550 );
+  let aX = createP("<b>x:</b> ");
+  aX.style("font-size","20px");
+  aX.position(20,plot.y + 526 );
 
   selectY = createSelect();
   selectY.changed(selectYChanged);
-  selectY.position(150,20);
+  selectY.position(160,plot.y + 550 );
+  let aY = createP("<b>y:</b> ");
+  aY.style("font-size","20px");
+  aY.position(140,plot.y + 526 );
 
   selectY2 = createSelect();
   selectY2.changed(selectY2Changed);
   selectY2.option("not defined")
-  selectY2.position(280,20);
+  selectY2.position(310,plot.y + 550);
+  let aY2 = createP("<b>y2:</b> ");
+  aY2.style("font-size","20px");
+  aY2.position(280,plot.y + 526 );
 
 
 
   pHtmlMsg = createP("No Serial Device Connected");
-  pHtmlMsg.position(0,plot.y+height+canvas.y+20);
+  pHtmlMsg.position(20,plot.y+height+canvas.y+20);
   sliderTxt = createP("Number of Data Points: ");
   sliderTxt.position(plot.x+12,plot.y + 460);
   sliderValue = createP(dataSlider.value());
@@ -104,7 +117,7 @@ function setup() {
 
 function draw() {
   background(255);
-  frame+=1;
+
 
   if(serial.isOpen()){
     serialButton.position(-300,0);
@@ -156,12 +169,7 @@ function selectY2Changed() {
 
 
 function drawSerialData(){
-  textSize(20);
-  textAlign(LEFT);
-  for(let i = 0; i < values.length; i++){
-    let el = values[i]
-    // text(el.name+':',el.posX,el.posY)
-    // text(el.lastElement(),el.posX+el.name.length*12,el.posY)
+  for(el of values){
     el.window.draw();
     el.window.txt = el.name + ": "+ el.data.slice(-1);
   }
@@ -192,7 +200,7 @@ function onSerialConnectionClosed(eventSender) {
 
 function createDataObjects(){
   for(let i = 0; i < data.length; i = i+2){
-    a =new Value(data[i],20+100*i,30);
+    a =new Value(data[i],20+100*i,30,i/2);
     values.push(a);}
 }
 
@@ -210,8 +218,8 @@ function onSerialDataReceived(eventSender, newData) {
   data = newData.split(',');
   //called first time data are received and creates buttons for each data.
   if(!receivedData){
-    setTimeout(createDataObjects,1000);
-    setTimeout(createSelectionParameters, 1000);
+    setTimeout(createDataObjects,2000);
+    setTimeout(createSelectionParameters, 2000);
     receivedData=true;
   }
   if(!pause){
@@ -240,20 +248,6 @@ function keyPressed(){
   }
   if(key == 'r'){
     resetData();
-  }
-  if(key == 't'){
-    if(canvas.y != 0){
-    canvas.position(0,0);
-    plot.position(0,500);
-  }else{
-    canvas.position(0,500);
-    plot.position(0,0);
-  }
-    dataSlider.position(plot.x+10, plot.y + 500);
-    sliderTxt.position(plot.x+12,plot.y + 460);
-    sliderValue.position(plot.x+180,plot.y + 460);
-
-
   }
 }
 
