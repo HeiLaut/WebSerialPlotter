@@ -15,7 +15,9 @@ class Window{
     this.mx = x,
     this.my = y
     this.moving = false,
-    this.scaling = false
+    this.scaling = false,
+    this.mousePressed = false,
+    this.show = true
   }
   draw(){
     if(this.x<0){
@@ -31,21 +33,34 @@ class Window{
       this.y = height-this.height;
     }
     fill(this.bgcolor);
-    rect(this.x,this.y,this.width,this.height);
-    rect(this.x+this.width-this.resizeRect,this.y+this.height-this.resizeRect,this.resizeRect,this.resizeRect);
-    rect(this.x,this.y+this.height-this.resizeRect,this.resizeRect,this.resizeRect);
-    rect(this.x+this.resizeRect,this.y+this.height-this.resizeRect,this.resizeRect,this.resizeRect);
-    fill("black")
-    textSize(14);
-    textAlign(CENTER,BOTTOM)
-    text("A+ ",this.x+this.resizeRect/2+2, this.y+this.height-2)
-    textSize(12);
-    text("A- ",this.x+this.resizeRect*1.5+2, this.y+this.height-2)
 
-    textAlign(LEFT,TOP)
 
-    textSize(this.txtSz);
-    text(this.txt,this.x+5,this.y+5);
+
+    if(this.show){
+      rect(this.x,this.y,this.width,this.height);
+      rect(this.x+this.width-this.resizeRect,this.y,this.resizeRect,this.resizeRect);
+      rect(this.x,this.y+this.height-this.resizeRect,this.resizeRect,this.resizeRect);
+      rect(this.x+this.resizeRect,this.y+this.height-this.resizeRect,this.resizeRect,this.resizeRect);
+      fill("black")
+      textSize(14);
+      textAlign(CENTER,BOTTOM);
+      text("A+ ",this.x+this.resizeRect/2+2, this.y+this.height-2);
+      textSize(12);
+      text("A- ",this.x+this.resizeRect*1.5+2, this.y+this.height-2);
+
+      textAlign(CENTER,TOP);
+      textSize(20);
+      text("_",this.x+this.width-this.resizeRect/2,this.y-10);
+      textAlign(LEFT,TOP);
+      textSize(this.txtSz);
+      text(this.txt,this.x+5,this.y+5);
+    }else{
+      rect(this.x+this.width-this.resizeRect,this.y,this.resizeRect,this.resizeRect);
+      fill("black")
+      textAlign(CENTER,TOP);
+      textSize(14);
+      text(this.txt[0],this.x+this.width-this.resizeRect/2,this.y+5);
+    }
     this.checkPressed();
 
   }
@@ -56,28 +71,36 @@ class Window{
   if(!mouseIsPressed){
     this.mx = mouseX;
     this.my = mouseY;
+    this.mousePressed = false;
     }
     if(mouseIsPressed){
-     if(this.mouseInsideRect(this.x,this.y+this.height-this.resizeRect,this.resizeRect,this.resizeRect)){
-       if(!this.moving && !anymoves){
-         this.scale(1);
+    if(this.mouseInsideRect(this.x+this.width-this.resizeRect,this.y,this.resizeRect,this.resizeRect)){
+      if(this.show && !this.mousePressed && !anymoves ){
+      this.show = false;
+      this.mousePressed = true;}
+      else if (!this.show && !this.mousePressed && !anymoves) {
+      this.show = true;
+      this.mousePressed = true;}
+      }
+     else if(this.mouseInsideRect(this.x,this.y+this.height-this.resizeRect,this.resizeRect,this.resizeRect)){
+       if(!this.moving && !anymoves && !this.mousePressed){
+         this.scale(5);
+         this.mousePressed = true;
        }
      }
      else if(this.mouseInsideRect(this.x+this.resizeRect,this.y+this.height-this.resizeRect,this.resizeRect,this.resizeRect)){
-       if(!this.moving && !anymoves){
-         this.scale(-1);
+       if(!this.moving && !anymoves&& !this.mousePressed){
+         this.scale(-5);
+         this.mousePressed = true;
        }
-     }
-      else if(this.mouseInsideRect(this.x+this.width-this.resizeRect,this.y+this.height-this.resizeRect,this.resizeRect,this.resizeRect)){
-      }
-      else if(this.mouseInsideRect(this.x,this.y,this.height,this.width)){
+     }else if(this.mouseInsideRect(this.x,this.y,this.height,this.width)){
 
         for(el of values){
           if(el.window.moving){
             anymoves = true;
           }
         }
-        if(!anymoves){
+        if(!anymoves && this.show){
           this.moving = true;
         }
       }

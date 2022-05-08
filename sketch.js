@@ -23,14 +23,20 @@ let values =[]; //Array for Data Objects
 let canvas,plot;
 /**anymoves regocnizes if any if the object ist moving. When this is the cas the
 other objects dont move or scale. Needs an other solution than a
-global variable. At the moment i have no better approach*/
+global variable. At the moment i have no better approach. maybe i need a values class*/
 let anymoves = false;
+let diagramAndControls = [];
 
 function setup() {
-  canvas = createCanvas(1200,500);
-  plot = select('#plot')
+  canvas = createCanvas(1200,600);
   canvas.position(0,600);
-  plot.position(0,20);
+
+  //plot = select('#plot')
+  plot = createDiv();
+  plot.id('plot');
+  plot.style("width","800px");
+  plot.style("height","500px");
+  plot.position(0,50);
 
   // Setup Web Serial using serial.js
   serial = new Serial();
@@ -45,7 +51,7 @@ function setup() {
   // Add in a lil <p> element to provide messages. This is optional
 
 
-  pauseButton = createButton('Run/ Pause (p)');
+  pauseButton = createButton('Pause (p)');
   pauseButton.position(800, 50);
   pauseButton.style("width","150px")
   pauseButton.mousePressed(togglePause);
@@ -108,11 +114,30 @@ function setup() {
   sliderValue = createP(dataSlider.value());
   sliderValue.position(plot.x+180,plot.y + 460)
 
+  let diaOff = createButton("Diagramm on/off");
+  diaOff.position(800,500);
+  diaOff.mousePressed(hideShowDia)
 
-    dataTable = new p5.Table();
 
+  dataTable = new p5.Table();
+
+  diagramAndControls.push(sliderTxt,sliderValue,dataSlider,plot,selectY,selectY2,selectX,aX,aY,aY2);
 }
 
+
+function hideShowDia(){
+  let canvasPos;
+  for(let el of diagramAndControls){
+    if(el.style("display")=='block'){
+    el.style("display","none");
+     canvasPos = 0;
+    }else{
+    el.style("display","block");
+      canvasPos = 600;
+  }
+  }
+  canvas.position(0,canvasPos)
+}
 
 
 function draw() {
@@ -128,11 +153,13 @@ function draw() {
  if(!pause){
    drawDia();
    pauseButton.style("background-color","#008CBA");
+   pauseButton.html("Pause (p)")
 
   }
 
   if(pause){
     pauseButton.style("background-color","green");
+    pauseButton.html("Run (p)")
   }
   drawSerialData();
   textSize(16);
