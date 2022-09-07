@@ -1,11 +1,12 @@
 class Window{
-  constructor(x,y,dat,col){
+  constructor(x,y,dat,col,id){
     textSize(20);
+    this.id = id,
     this.x = x,
     this.y = y,
     this.px = x,
     this.py = y,
-    this.dat = dat,
+    //this.dat = dat,
     this.width = textWidth(dat)+100,
     this.txtSz = 20;
     this.height = this.txtSz+30,
@@ -34,19 +35,33 @@ class Window{
     }
     fill(this.bgcolor);
 
-
-
     if(this.show){
       rect(this.x,this.y,this.width,this.height);
+
+      //minimize button
       rect(this.x+this.width-this.resizeRect,this.y,this.resizeRect,this.resizeRect);
+
+      //offset button
+      if(values[this.id].offset == 0){
+        noFill();
+      }else{
+        fill("grey");
+      }
+      rect(this.x+this.width-this.resizeRect,this.y+this.height-this.resizeRect,this.resizeRect,this.resizeRect);
+
+      noFill();
+      //textsize buttons
       rect(this.x,this.y+this.height-this.resizeRect,this.resizeRect,this.resizeRect);
       rect(this.x+this.resizeRect,this.y+this.height-this.resizeRect,this.resizeRect,this.resizeRect);
+
       fill("black")
       textSize(14);
       textAlign(CENTER,BOTTOM);
       text("A+ ",this.x+this.resizeRect/2+2, this.y+this.height-2);
+
       textSize(12);
       text("A- ",this.x+this.resizeRect*1.5+2, this.y+this.height-2);
+      text("OS ",this.x+this.width-9, this.y+this.height-2);
 
       textAlign(CENTER,TOP);
       textSize(20);
@@ -73,7 +88,7 @@ class Window{
     this.my = mouseY;
     this.mousePressed = false;
     }
-    if(mouseIsPressed){
+  if(mouseIsPressed){
     if(this.mouseInsideRect(this.x+this.width-this.resizeRect,this.y,this.resizeRect,this.resizeRect)){
       if(this.show && !this.mousePressed && !anymoves ){
       this.show = false;
@@ -93,8 +108,17 @@ class Window{
          this.scale(-5);
          this.mousePressed = true;
        }
-     }else if(this.mouseInsideRect(this.x,this.y,this.height,this.width)){
+     }else if(this.mouseInsideRect(this.x+this.width-this.resizeRect,this.y+this.height-this.resizeRect,this.resizeRect,this.resizeRect)){
+       if(!this.moving && !anymoves&& !this.mousePressed){
+         if(values[this.id].offset!=0){
+           values[this.id].offset = 0;
+         }else{
+           values[this.id].offset=values[this.id].data.slice(-1);
+        }
+         this.mousePressed = true;
 
+       }
+     }else if(this.mouseInsideRect(this.x,this.y,this.height,this.width)){
         for(el of values){
           if(el.window.moving){
             anymoves = true;
@@ -116,7 +140,7 @@ class Window{
   mouseInsideRect(x,y,h,w){
     return (mouseX>x && mouseX < x+w && mouseY>y && mouseY<y+h)
   }
-    move(){
+  move(){
       this.x = mouseX-(this.mx-this.px);
       this.y = mouseY-(this.my-this.py);
       let grid = 10;

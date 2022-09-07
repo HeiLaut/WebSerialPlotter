@@ -27,6 +27,8 @@ global variable. At the moment i have no better approach. maybe i need a values 
 let anymoves = false;
 let diagramAndControls = [];
 
+let timeOffset=0;
+
 function setup() {
   canvas = createCanvas(1200,600);
   canvas.position(0,600);
@@ -60,6 +62,11 @@ function setup() {
   resetButton.position(800, 100);
   resetButton.style("width","150px")
   resetButton.mousePressed(resetData);
+
+  restartButton = createButton('Restart t=0 (n)')
+  restartButton.position(800,250)
+  restartButton.style("width","150px");
+  restartButton.mousePressed(restartTimer)
 
   csvButton = createButton('Save CSV-File');
   csvButton.position(800,150  );
@@ -139,6 +146,11 @@ function hideShowDia(){
   canvas.position(0,canvasPos)
 }
 
+function restartTimer(){
+  values[0].offset=values[0].last;
+  resetData();
+  pause=false;
+}
 
 function draw() {
   background(255);
@@ -186,6 +198,7 @@ function selectXChanged() {
 function selectYChanged() {
   paramY = selectY.value()[0]
 }
+
 function selectY2Changed() {
   if(selectY2.value() === "not defined"){
     paramY2 = undefined;
@@ -195,12 +208,6 @@ function selectY2Changed() {
 }
 
 
-function drawSerialData(){
-  for(el of values){
-    el.window.draw();
-    el.window.txt = el.name + ": "+ el.data.slice(-1);
-  }
-}
 
 /**
 00px; * Callback function by serial.js when there is an error on web serial
@@ -234,11 +241,22 @@ function createDataObjects(){
 function storeData(){
   try{
     for(let i=0;i < values.length;i++){
-      values[i].data.push(data[2*i+1]);
+      let lastitem = data[2*i+1]
+      values[i].data.push(lastitem-values[i].offset);
       values[i].del(dataSlider.value());
+      values[i].last = lastitem;
     }
 
   }catch{}
+}
+
+
+function drawSerialData(){
+  for(el of values){
+    el.window.draw();
+    let value =  round(el.data.slice(-1),2);
+    el.window.txt = el.name + ": " + value;
+  }
 }
 
 function onSerialDataReceived(eventSender, newData) {
@@ -276,22 +294,27 @@ function keyPressed(){
   if(key == 'r'){
     resetData();
   }
+  if(key == 'n'){
+    restartTimer();
+  }
 }
-
-
 
 function togglePause(){
    if(pause){
       pause = false;
+
     }else{
-    pause = true;}
+      pause = true;
+
+  }
 
 }
 
 function resetData(){
-  for(let i =0; i < values.length; i++){
-    values[i].data = [];
+  for(el of values){
+    el.data = [];
   }
+
     drawDia();
 }
 
